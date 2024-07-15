@@ -6,16 +6,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     const historicalRatesContainer = document.getElementById('historical-rates-container');
     const saveFavoriteButton = document.getElementById('save-favorite');
     const favoriteCurrencyPairsContainer = document.getElementById('favorite-currency-pairs');
-    const historicalRatesButton = document.getElementById('historical-rates');
-    const dateInput = document.getElementById('date');
-
+    const historicalRatesButton = document.getElementById('historical-rates-button');
+    
     const apiKey = 'fca_live_FkOHguHFogGmWLWA48pn6q2K8ihxVm64yNuLzRyb';
     const apiUrl = `https://api.freecurrencyapi.com/v1/latest?apikey=${apiKey}`;
+
+    let myHeaders = new Headers();
+    myHeaders.append("apikey", apiKey);
+
+    let requestOptions = {
+        method: 'GET',
+        redirect: 'follow',
+        headers: myHeaders
+    };
 
     // Fetch available currencies and populate dropdowns
     async function fetchCurrencies() {
         try {
-            const response = await fetch(apiUrl);
+            const response = await fetch(apiUrl, requestOptions);
             const data = await response.json();
             const currencies = Object.keys(data.data);
             currencies.forEach(currency => {
@@ -33,7 +41,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Fetch exchange rate data
     async function fetchExchangeRate(baseCurrency, targetCurrency) {
         try {
-            const response = await fetch(`${apiUrl}&base_currency=${baseCurrency}`);
+            const response = await fetch(`${apiUrl}&base_currency=${baseCurrency}`, requestOptions);
             const data = await response.json();
             return data.data[targetCurrency];
         } catch (error) {
@@ -64,16 +72,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     async function fetchHistoricalRates() {
         const baseCurrency = baseCurrencySelect.value;
         const targetCurrency = targetCurrencySelect.value;
-        const date = dateInput.value;
-        if (!date) {
-            alert('Please select a date.');
-            return;
-        }
-        const historicalApiUrl = `https://api.freecurrencyapi.com/v1/historical?apikey=${apiKey}&date_from=${date}&base_currency=${baseCurrency}`;
+        const date = '2021-01-01'; // Hard-coded date
+        const historicalApiUrl = `https://api.freecurrencyapi.com/v1/historical?apikey=${apiKey}&date=${date}&base_currency=${baseCurrency}&currencies=${targetCurrency}`;
         try {
             const response = await fetch(historicalApiUrl);
             const data = await response.json();
-            const rate = data.data[targetCurrency];
+            const rate = data.data[date][targetCurrency];
             historicalRatesContainer.textContent = `Historical exchange rate on ${date}: 1 ${baseCurrency} = ${rate} ${targetCurrency}`;
         } catch (error) {
             console.error('Error fetching historical rates:', error);
